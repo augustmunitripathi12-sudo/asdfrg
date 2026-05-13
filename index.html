@@ -505,12 +505,35 @@ socket.on("playerJoined", (player) => {
   }
 });
 
+/* FIX 1: merge movement data instead of replacing the whole object */
 socket.on("playerMoved", (player) => {
-  if (player.id !== socket.id) otherPlayers[player.id] = player;
+  if (player.id !== socket.id) {
+    if (!otherPlayers[player.id]) {
+      otherPlayers[player.id] = {
+        ...player,
+        name: player.name || "Player",
+        character: player.character || "original"
+      };
+    } else {
+      otherPlayers[player.id].x = player.x;
+      otherPlayers[player.id].y = player.y;
+      otherPlayers[player.id].frame = player.frame;
+      otherPlayers[player.id].facingLeft = player.facingLeft;
+      otherPlayers[player.id].currentDir = player.currentDir;
+    }
+  }
 });
 
+/* FIX 2: merge name/character so position data isn't clobbered */
 socket.on("playerUpdated", (player) => {
-  if (player.id !== socket.id) otherPlayers[player.id] = player;
+  if (player.id !== socket.id) {
+    if (!otherPlayers[player.id]) {
+      otherPlayers[player.id] = player;
+    } else {
+      otherPlayers[player.id].name = player.name;
+      otherPlayers[player.id].character = player.character;
+    }
+  }
 });
 
 socket.on("playerDisconnected", (id) => {
@@ -681,7 +704,6 @@ function drawPlayer(player, isLocal) {
 
   let img = getImage(src);
   if (!img) {
-    // Fallback to frame 0 of same direction if current frame not loaded
     const fallbackSrc = frames[0];
     if (fallbackSrc) img = getImage(fallbackSrc);
   }
@@ -764,5 +786,7 @@ window.addEventListener("resize", fitCanvas);
 fitCanvas();
 </script>
 
+</body>
+</html>
 </body>
 </html>
